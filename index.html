@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0f172a">
+<title>Treino Timer</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <section id="screen-setup" class="screen active">
+    <h1>Treino Timer</h1>
+
+    <div class="section-label">Planos guardados</div>
+    <div class="presets" id="presets"></div>
+
+    <div class="section-label">Plano actual</div>
+    <div class="exercise-list" id="exercise-list"></div>
+
+    <form id="add-exercise-form">
+      <div class="field grow">
+        <label for="ex-name">Exercício</label>
+        <input type="text" id="ex-name" placeholder="ex: Flexões" maxlength="30">
+      </div>
+      <div class="field narrow">
+        <label for="ex-seconds">Segundos</label>
+        <input type="number" id="ex-seconds" min="1" max="3600" value="30">
+      </div>
+      <button id="btn-add-exercise" type="submit" class="secondary add-btn">+</button>
+    </form>
+
+    <div class="global-fields">
+      <div class="field">
+        <label for="prepare">Preparação (s)</label>
+        <input type="number" id="prepare" min="0" max="60" value="10">
+      </div>
+      <div class="field">
+        <label for="rest">Descanso entre exercícios (s)</label>
+        <input type="number" id="rest" min="0" max="600" value="15">
+      </div>
+      <div class="field">
+        <label for="rounds">Repetir circuito</label>
+        <input type="number" id="rounds" min="1" max="99" value="1">
+      </div>
+      <div class="field">
+        <label for="preset-name">Nome do plano (p/ guardar)</label>
+        <input type="text" id="preset-name" placeholder="ex: Treino de casa">
+      </div>
+    </div>
+
+    <div class="setup-actions">
+      <button id="btn-save-preset" class="secondary">Guardar</button>
+      <button id="btn-start" class="primary">Começar</button>
+    </div>
+  </section>
+
+  <section id="screen-run" class="screen">
+    <div class="round-label" id="round-label">Série 1 / 8</div>
+
+    <div class="ring-wrap">
+      <svg class="ring" viewBox="0 0 240 240">
+        <circle class="ring-track" cx="120" cy="120" r="108"></circle>
+        <circle class="ring-progress" id="ring-progress" cx="120" cy="120" r="108"></circle>
+      </svg>
+      <div class="ring-center">
+        <div class="phase-label" id="phase-label">TRABALHO</div>
+        <div class="time-display" id="time-display">00:40</div>
+      </div>
+    </div>
+
+    <div class="run-actions">
+      <button id="btn-pause" class="secondary round">
+        <svg id="icon-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+        <svg id="icon-play" viewBox="0 0 24 24" hidden><path d="M7 4l14 8-14 8V4z"/></svg>
+      </button>
+      <button id="btn-skip" class="secondary round">
+        <svg viewBox="0 0 24 24"><path d="M6 4l12 8-12 8V4z"/><rect x="18" y="4" width="2.5" height="16" rx="1"/></svg>
+      </button>
+      <button id="btn-stop" class="danger round">
+        <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <section id="screen-done" class="screen">
+    <div class="done-icon">✔</div>
+    <h2>Treino terminado</h2>
+    <button id="btn-again" class="primary">Voltar ao início</button>
+  </section>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
