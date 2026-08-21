@@ -18,7 +18,33 @@ function showScreen(name) {
 
 // ---------- Exercise list (current draft) ----------
 
-let exercises = []; // [{name, seconds}]
+let exercises = []; // [{name, mode: 'time'|'reps', seconds?, reps?}]
+let addMode = 'time';
+
+const modeToggle = el('mode-toggle');
+modeToggle.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('.mode-btn');
+  if (!btn) return;
+  addMode = btn.dataset.mode;
+  for (const b of modeToggle.querySelectorAll('.mode-btn')) {
+    b.classList.toggle('active', b === btn);
+  }
+  const valueInput = el('ex-value');
+  const valueLabel = el('ex-value-label');
+  if (addMode === 'reps') {
+    valueLabel.textContent = 'Repetições';
+    valueInput.value = '12';
+    valueInput.max = '999';
+  } else {
+    valueLabel.textContent = 'Segundos';
+    valueInput.value = '30';
+    valueInput.max = '3600';
+  }
+});
+
+function exerciseValueText(ex) {
+  return ex.mode === 'reps' ? `× ${ex.reps}` : `${ex.seconds}s`;
+}
 
 function renderExerciseList() {
   const container = el('exercise-list');
@@ -32,7 +58,7 @@ function renderExerciseList() {
   }
   exercises.forEach((ex, i) => {
     const row = document.createElement('div');
-    row.className = 'exercise-row';
+    row.className = ex.mode === 'reps' ? 'exercise-row reps-row' : 'exercise-row';
 
     const order = document.createElement('span');
     order.className = 'order';
@@ -42,9 +68,9 @@ function renderExerciseList() {
     name.className = 'name';
     name.textContent = ex.name;
 
-    const seconds = document.createElement('span');
-    seconds.className = 'seconds';
-    seconds.textContent = `${ex.seconds}s`;
+    const value = document.createElement('span');
+    value.className = 'value';
+    value.textContent = exerciseValueText(ex);
 
     const up = document.createElement('span');
     up.className = 'move';
@@ -72,7 +98,7 @@ function renderExerciseList() {
       renderExerciseList();
     });
 
-    row.append(order, name, seconds, up, down, del);
+    row.append(order, name, value, up, down, del);
     container.appendChild(row);
   });
 }
@@ -80,16 +106,18 @@ function renderExerciseList() {
 el('add-exercise-form').addEventListener('submit', (ev) => {
   ev.preventDefault();
   const nameInput = el('ex-name');
-  const secondsInput = el('ex-seconds');
+  const valueInput = el('ex-value');
   const name = nameInput.value.trim();
-  const seconds = Number(secondsInput.value);
-  if (!name || !seconds || seconds <= 0) {
+  const value = Number(valueInput.value);
+  if (!name || !value || value <= 0) {
     nameInput.focus();
     return;
   }
-  exercises.push({ name, seconds });
+  exercises.push(
+    addMode === 'reps' ? { name, mode: 'reps', reps: value } : { name, mode: 'time', seconds: value }
+  );
   nameInput.value = '';
-  secondsInput.value = '30';
+  valueInput.value = addMode === 'reps' ? '12' : '30';
   nameInput.focus();
   renderExerciseList();
 });
@@ -242,14 +270,18 @@ let paused = false;
 function buildPlan(cfg) {
   const steps = [];
   if (cfg.prepare > 0) {
-    steps.push({ phase: 'prepare', duration: cfg.prepare, label: 'Preparar', round: 0, totalRounds: cfg.rounds });
+    steps.push({ phase: 'prepare', mode: 'time', duration: cfg.prepare, label: 'Preparar', round: 0, totalRounds: cfg.rounds });
   }
   for (let r = 1; r <= cfg.rounds; r++) {
     cfg.exercises.forEach((ex, i) => {
-      steps.push({ phase: 'work', duration: ex.seconds, label: ex.name, round: r, totalRounds: cfg.rounds });
+      if (ex.mode === 'reps') {
+        steps.push({ phase: 'work', mode: 'reps', reps: ex.reps, label: ex.name, round: r, totalRounds: cfg.rounds });
+      } else {
+        steps.push({ phase: 'work', mode: 'time', duration: ex.seconds, label: ex.name, round: r, totalRounds: cfg.rounds });
+      }
       const isLastExerciseOfLastRound = r === cfg.rounds && i === cfg.exercises.length - 1;
       if (cfg.rest > 0 && !isLastExerciseOfLastRound) {
-        steps.push({ phase: 'rest', duration: cfg.rest, label: 'Descanso', round: r, totalRounds: cfg.rounds });
+        steps.push({ phase: 'rest', mode: 'time', duration: cfg.rest, label: 'Descanso', round: r, totalRounds: cfg.rounds });
       }
     });
   }
@@ -281,19 +313,36 @@ function setRingProgress(fraction) {
 
 function renderStep() {
   const step = plan[planIndex];
+  const isReps = step.mode === 'reps';
+
   el('phase-label').textContent = phaseText(step);
   applyPhaseClass(step.phase);
-  el('time-display').textContent = formatTime(remaining);
   el('round-label').textContent = step.phase === 'prepare'
     ? 'Prepara-te...'
     : `Série ${step.round} / ${step.totalRounds}`;
-  setRingProgress(remaining / step.duration);
+
+  el('ring-wrap').classList.toggle('manual', isReps);
+  el('time-display').hidden = isReps;
+  el('reps-count').hidden = !isReps;
+  el('reps-hint').hidden = !isReps;
+  el('run-actions-time').hidden = isReps;
+  el('run-actions-reps').hidden = !isReps;
+
+  if (isReps) {
+    el('reps-count').textContent = `× ${step.reps}`;
+    setRingProgress(1);
+  } else {
+    el('time-display').textContent = formatTime(remaining);
+    setRingProgress(remaining / step.duration);
+  }
 }
 
 function startTicking() {
   clearInterval(ticking);
   ticking = setInterval(() => {
     if (paused) return;
+    const step = plan[planIndex];
+    if (step.mode === 'reps') return; // manual step, advanced only via "Concluído"
     remaining -= 1;
     if (remaining <= 3 && remaining > 0) cueTick();
     if (remaining <= 0) {
@@ -301,7 +350,7 @@ function startTicking() {
       return;
     }
     el('time-display').textContent = formatTime(remaining);
-    setRingProgress(remaining / plan[planIndex].duration);
+    setRingProgress(remaining / step.duration);
   }, 1000);
 }
 
@@ -312,7 +361,7 @@ function advanceStep() {
     return;
   }
   const step = plan[planIndex];
-  remaining = step.duration;
+  remaining = step.mode === 'reps' ? 0 : step.duration;
   cuePhaseChange(step.phase === 'work');
   renderStep();
 }
@@ -337,7 +386,7 @@ function startWorkout() {
   };
   plan = buildPlan(cfg);
   planIndex = 0;
-  remaining = plan[0].duration;
+  remaining = plan[0].mode === 'reps' ? 0 : plan[0].duration;
   paused = false;
   showPauseIcon();
   renderStep();
@@ -367,11 +416,15 @@ el('btn-skip').addEventListener('click', () => {
   advanceStep();
 });
 
-el('btn-stop').addEventListener('click', () => {
+el('btn-stop').addEventListener('click', stopWorkout);
+el('btn-stop-reps').addEventListener('click', stopWorkout);
+el('btn-done').addEventListener('click', () => advanceStep());
+
+function stopWorkout() {
   clearInterval(ticking);
   releaseWakeLock();
   showScreen('setup');
-});
+}
 
 el('btn-again').addEventListener('click', () => {
   showScreen('setup');

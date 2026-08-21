@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Manrope:wght@500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Manrope:wght@500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -31,11 +31,17 @@
         <label for="ex-name">Exercício</label>
         <input type="text" id="ex-name" placeholder="ex: Flexões" maxlength="30">
       </div>
-      <div class="field narrow">
-        <label for="ex-seconds">Segundos</label>
-        <input type="number" id="ex-seconds" min="1" max="3600" value="30">
+      <div class="add-exercise-row">
+        <div class="mode-toggle" id="mode-toggle" role="group" aria-label="Tipo de exercício">
+          <button type="button" class="mode-btn active" data-mode="time">Tempo</button>
+          <button type="button" class="mode-btn" data-mode="reps">Repetições</button>
+        </div>
+        <div class="field narrow">
+          <label for="ex-value" id="ex-value-label">Segundos</label>
+          <input type="number" id="ex-value" min="1" max="3600" value="30">
+        </div>
+        <button id="btn-add-exercise" type="submit" class="secondary add-btn">+</button>
       </div>
-      <button id="btn-add-exercise" type="submit" class="secondary add-btn">+</button>
     </form>
 
     <div class="global-fields">
@@ -66,7 +72,7 @@
   <section id="screen-run" class="screen">
     <div class="round-label" id="round-label">Série 1 / 8</div>
 
-    <div class="ring-wrap">
+    <div class="ring-wrap" id="ring-wrap">
       <svg class="ring" viewBox="0 0 240 240">
         <circle class="ring-track" cx="120" cy="120" r="108"></circle>
         <circle class="ring-progress" id="ring-progress" cx="120" cy="120" r="108"></circle>
@@ -74,10 +80,12 @@
       <div class="ring-center">
         <div class="phase-label" id="phase-label">TRABALHO</div>
         <div class="time-display" id="time-display">00:40</div>
+        <div class="reps-count" id="reps-count" hidden>× 12</div>
+        <div class="reps-hint" id="reps-hint" hidden>repetições</div>
       </div>
     </div>
 
-    <div class="run-actions">
+    <div class="run-actions" id="run-actions-time">
       <button id="btn-pause" class="secondary round">
         <svg id="icon-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
         <svg id="icon-play" viewBox="0 0 24 24" hidden><path d="M7 4l14 8-14 8V4z"/></svg>
@@ -86,6 +94,13 @@
         <svg viewBox="0 0 24 24"><path d="M6 4l12 8-12 8V4z"/><rect x="18" y="4" width="2.5" height="16" rx="1"/></svg>
       </button>
       <button id="btn-stop" class="danger round">
+        <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+      </button>
+    </div>
+
+    <div class="run-actions" id="run-actions-reps" hidden>
+      <button id="btn-done" class="primary">Concluído</button>
+      <button id="btn-stop-reps" class="danger round">
         <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
       </button>
     </div>

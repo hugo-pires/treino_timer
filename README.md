@@ -6,10 +6,17 @@ comporta-se como uma app normal (ícone próprio, ecrã completo, funciona offli
 
 ## Conceito
 
-Um **plano** é uma lista de exercícios nomeados, cada um com o seu tempo (ex:
-"Flexões" 30s, "Prancha" 45s, "Agachamentos" 30s), com um descanso configurável
-entre exercícios e a possibilidade de repetir o circuito inteiro N vezes. Planos
-podem ser guardados com nome e reutilizados.
+Um **plano** é uma lista de exercícios nomeados, cada um definido de uma de duas
+formas:
+
+- **Tempo** — conta o tempo decrescente (ex: "Prancha" 45s), avança sozinho.
+- **Repetições** — só informativo (ex: "Flexões" × 12); não há forma de o
+  sistema verificar quantas repetições fizeste de facto, por isso não conta
+  nada — mostra o número e esperas pelo botão "Concluído" para avançar, ao
+  teu próprio ritmo. Autodisciplina, não automação.
+
+Descanso configurável entre exercícios e possibilidade de repetir o circuito
+inteiro N vezes. Planos podem ser guardados com nome e reutilizados.
 
 Grafismo inspirado na app "Timer Plus": anel de progresso circular grande, tema
 escuro, uma cor de destaque por fase (preparação / trabalho / descanso).
