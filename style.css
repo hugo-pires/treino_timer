@@ -16,7 +16,7 @@ html, body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: -apple-system, Roboto, "Segoe UI", sans-serif;
+  font-family: "Manrope", -apple-system, Roboto, "Segoe UI", sans-serif;
   overscroll-behavior: none;
   user-select: none;
   -webkit-user-select: none;
@@ -43,17 +43,23 @@ html, body {
 
 h1 {
   text-align: center;
-  font-size: 1.6rem;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 2.2rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   margin: 8px 0 0;
-  font-weight: 600;
+  font-weight: 700;
+  text-wrap: balance;
 }
 
 .section-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
   margin-top: 4px;
+  font-weight: 600;
 }
 
 .presets {
@@ -229,9 +235,12 @@ button.danger {
 #screen-run.phase-prepare { background: #241004; }
 
 .round-label {
+  font-family: "Barlow Condensed", sans-serif;
   color: var(--muted);
-  font-size: 0.95rem;
-  letter-spacing: 0.04em;
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
 .ring-wrap {
@@ -278,10 +287,12 @@ button.danger {
 }
 
 .phase-label {
-  font-size: 1.1rem;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.3rem;
   letter-spacing: 0.15em;
   color: var(--muted);
   font-weight: 700;
+  text-transform: uppercase;
 }
 
 #screen-run.phase-work .phase-label { color: var(--accent); }
@@ -289,7 +300,8 @@ button.danger {
 #screen-run.phase-prepare .phase-label { color: var(--accent-2); }
 
 .time-display {
-  font-size: 3.6rem;
+  font-family: "Space Mono", "Courier New", monospace;
+  font-size: 3.4rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
