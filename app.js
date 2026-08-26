@@ -3,6 +3,7 @@
 const PRESETS_KEY = 'treino-timer-presets-v2';
 const HISTORY_KEY = 'treino-timer-history-v1';
 const HISTORY_MAX_ENTRIES = 200;
+const CATALOG_KEY = 'treino-timer-exercise-catalog-v1';
 const RING_CIRCUMFERENCE = 2 * Math.PI * 108; // r=108, matches SVG in index.html
 
 const el = (id) => document.getElementById(id);
@@ -115,14 +116,71 @@ el('add-exercise-form').addEventListener('submit', (ev) => {
     nameInput.focus();
     return;
   }
-  exercises.push(
-    addMode === 'reps' ? { name, mode: 'reps', reps: value } : { name, mode: 'time', seconds: value }
-  );
+  const newEx = addMode === 'reps' ? { name, mode: 'reps', reps: value } : { name, mode: 'time', seconds: value };
+  exercises.push(newEx);
+  upsertCatalogEntry({ ...newEx });
   nameInput.value = '';
   valueInput.value = addMode === 'reps' ? '12' : '30';
   nameInput.focus();
   renderExerciseList();
 });
+
+// ---------- Exercise catalog (reusable exercise definitions) ----------
+
+function loadCatalog() {
+  try {
+    return JSON.parse(localStorage.getItem(CATALOG_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCatalog(catalog) {
+  localStorage.setItem(CATALOG_KEY, JSON.stringify(catalog));
+}
+
+function upsertCatalogEntry(entry) {
+  const catalog = loadCatalog();
+  const i = catalog.findIndex((e) => e.name === entry.name);
+  if (i >= 0) catalog[i] = entry; else catalog.push(entry);
+  saveCatalog(catalog);
+  renderCatalog();
+}
+
+function renderCatalog() {
+  const container = el('catalog');
+  container.innerHTML = '';
+  const catalog = loadCatalog().slice().sort((a, b) => a.name.localeCompare(b.name, 'pt'));
+
+  if (catalog.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'exercise-empty';
+    empty.textContent = 'Ainda sem exercícios guardados — adiciona um abaixo.';
+    container.appendChild(empty);
+    return;
+  }
+
+  for (const entry of catalog) {
+    const chip = document.createElement('span');
+    chip.className = 'preset-chip';
+    chip.textContent = `${entry.name} (${exerciseValueText(entry)})`;
+    chip.addEventListener('click', () => {
+      exercises.push({ ...entry });
+      renderExerciseList();
+    });
+
+    const del = document.createElement('span');
+    del.className = 'del';
+    del.textContent = '✕';
+    del.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      saveCatalog(loadCatalog().filter((e) => e.name !== entry.name));
+      renderCatalog();
+    });
+    chip.appendChild(del);
+    container.appendChild(chip);
+  }
+}
 
 // ---------- Presets (saved plans) ----------
 
@@ -561,6 +619,7 @@ el('btn-again').addEventListener('click', () => {
 renderExerciseList();
 renderPresets();
 renderHistory();
+renderCatalog();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

@@ -18,6 +18,13 @@ formas:
 Descanso configurável entre exercícios e possibilidade de repetir o circuito
 inteiro N vezes. Planos podem ser guardados com nome e reutilizados.
 
+Cada exercício usado (nome + tipo + valor por omissão) fica automaticamente
+guardado num **catálogo** reutilizável — ao construir um plano novo, basta
+tocar num exercício do catálogo para o acrescentar à sequência, em vez de o
+escrever de novo. Cada treino completo (não os interrompidos a meio) fica
+registado num **histórico** com data, plano, duração real e exercícios
+feitos.
+
 Grafismo inspirado na app "Timer Plus": anel de progresso circular grande, tema
 escuro, uma cor de destaque por fase (preparação / trabalho / descanso).
 
@@ -52,4 +59,5 @@ Abre `http://localhost:8000` no telemóvel (mesma rede) ou no browser do PC.
 - Áudio dos beeps gerado via Web Audio API (osciladores), sem ficheiros de som.
 - Vibração via Vibration API, mantém o ecrã aceso durante o treino via Wake
   Lock API (com fallback silencioso se o browser não suportar).
-- Planos guardados em `localStorage` — não sincroniza entre dispositivos.
+- Planos, catálogo de exercícios e histórico guardados em `localStorage` —
+  não sincroniza entre dispositivos.
