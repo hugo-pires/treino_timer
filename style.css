@@ -312,6 +312,11 @@ h1 {
   grid-column: 1 / -1;
 }
 
+.global-fields label[for="prepare"],
+.global-fields label[for="rest"] {
+  min-height: 2.4em;
+}
+
 .setup-actions {
   margin-top: auto;
   display: flex;
