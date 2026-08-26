@@ -1,4 +1,4 @@
-const CACHE_NAME = 'treino-timer-v5';
+const CACHE_NAME = 'treino-timer-v6';
 const ASSETS = [
   './',
   './index.html',
@@ -11,7 +11,13 @@ const ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        ASSETS.map((url) =>
+          fetch(url, { cache: 'reload' }).then((response) => cache.put(url, response))
+        )
+      )
+    )
   );
   self.skipWaiting();
 });
