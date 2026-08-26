@@ -225,8 +225,6 @@ function renderHistory() {
   container.innerHTML = '';
   const history = loadHistory();
 
-  el('btn-clear-history').hidden = history.length === 0;
-
   if (history.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'history-empty';
@@ -283,6 +281,19 @@ function renderHistory() {
     item.append(summary, details);
     container.appendChild(item);
   });
+
+  const actions = document.createElement('div');
+  actions.className = 'history-actions';
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.className = 'secondary';
+  clearBtn.textContent = 'Limpar histórico';
+  clearBtn.addEventListener('click', () => {
+    saveHistory([]);
+    renderHistory();
+  });
+  actions.appendChild(clearBtn);
+  container.appendChild(actions);
 }
 
 function recordHistory() {
@@ -300,11 +311,6 @@ function recordHistory() {
   saveHistory(history);
   renderHistory();
 }
-
-el('btn-clear-history').addEventListener('click', () => {
-  saveHistory([]);
-  renderHistory();
-});
 
 // ---------- Audio / vibration ----------
 

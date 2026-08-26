@@ -307,6 +307,7 @@ h1 {
   margin-top: 4px;
 }
 
+.global-fields .field:has(#rounds),
 .global-fields .field:has(#preset-name) {
   grid-column: 1 / -1;
 }
