@@ -82,6 +82,91 @@ h1 {
   color: var(--muted);
 }
 
+/* history */
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 26vh;
+  overflow-y: auto;
+}
+
+.history-entry {
+  background: var(--bg-2);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.history-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.history-date {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.history-name {
+  flex: 1;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.history-summary .del {
+  color: var(--danger);
+  font-size: 1.1rem;
+  padding: 0 2px;
+}
+
+.history-details {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #334155;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.history-details[hidden] {
+  display: none;
+}
+
+.history-empty {
+  color: var(--muted);
+  text-align: center;
+  font-size: 0.9rem;
+  padding: 8px 0;
+}
+
+.history-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.history-actions button {
+  flex: none;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+}
+
 .field {
   display: flex;
   flex-direction: column;

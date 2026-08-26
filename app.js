@@ -1,6 +1,8 @@
 'use strict';
 
 const PRESETS_KEY = 'treino-timer-presets-v2';
+const HISTORY_KEY = 'treino-timer-history-v1';
+const HISTORY_MAX_ENTRIES = 200;
 const RING_CIRCUMFERENCE = 2 * Math.PI * 108; // r=108, matches SVG in index.html
 
 const el = (id) => document.getElementById(id);
@@ -191,6 +193,119 @@ el('btn-save-preset').addEventListener('click', () => {
   renderPresets();
 });
 
+// ---------- History (completed workouts) ----------
+
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(history) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+}
+
+function formatHistoryDate(iso) {
+  const d = new Date(iso);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${dd}/${mm} ${hh}:${min}`;
+}
+
+function exerciseDetailText(ex) {
+  return ex.mode === 'reps' ? `${ex.name} — × ${ex.reps}` : `${ex.name} — ${ex.seconds}s`;
+}
+
+function renderHistory() {
+  const container = el('history-list');
+  container.innerHTML = '';
+  const history = loadHistory();
+
+  el('btn-clear-history').hidden = history.length === 0;
+
+  if (history.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'history-empty';
+    empty.textContent = 'Ainda sem treinos registados.';
+    container.appendChild(empty);
+    return;
+  }
+
+  history.forEach((entry, i) => {
+    const item = document.createElement('div');
+    item.className = 'history-entry';
+
+    const summary = document.createElement('div');
+    summary.className = 'history-summary';
+
+    const date = document.createElement('span');
+    date.className = 'history-date';
+    date.textContent = formatHistoryDate(entry.date);
+
+    const name = document.createElement('span');
+    name.className = 'history-name';
+    name.textContent = entry.planName || 'Treino livre';
+
+    const meta = document.createElement('span');
+    meta.className = 'history-meta';
+    meta.textContent = `${entry.exercises.length} ex. · ${formatTime(entry.durationSeconds)}`;
+
+    const del = document.createElement('span');
+    del.className = 'del';
+    del.textContent = '✕';
+    del.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const h = loadHistory();
+      h.splice(i, 1);
+      saveHistory(h);
+      renderHistory();
+    });
+
+    summary.append(date, name, meta, del);
+
+    const details = document.createElement('div');
+    details.className = 'history-details';
+    details.hidden = true;
+    entry.exercises.forEach((ex) => {
+      const line = document.createElement('div');
+      line.textContent = exerciseDetailText(ex);
+      details.appendChild(line);
+    });
+
+    summary.addEventListener('click', () => {
+      details.hidden = !details.hidden;
+    });
+
+    item.append(summary, details);
+    container.appendChild(item);
+  });
+}
+
+function recordHistory() {
+  if (!currentCfg) return;
+  const entry = {
+    date: new Date().toISOString(),
+    planName: el('preset-name').value.trim() || null,
+    durationSeconds: Math.max(0, Math.round((Date.now() - workoutStartTime) / 1000)),
+    rounds: currentCfg.rounds,
+    exercises: currentCfg.exercises.map((e) => ({ ...e })),
+  };
+  const history = loadHistory();
+  history.unshift(entry);
+  if (history.length > HISTORY_MAX_ENTRIES) history.length = HISTORY_MAX_ENTRIES;
+  saveHistory(history);
+  renderHistory();
+}
+
+el('btn-clear-history').addEventListener('click', () => {
+  saveHistory([]);
+  renderHistory();
+});
+
 // ---------- Audio / vibration ----------
 
 let audioCtx = null;
@@ -266,6 +381,8 @@ let planIndex = 0;
 let remaining = 0;   // seconds left in current step
 let ticking = null;  // interval handle
 let paused = false;
+let currentCfg = null;    // cfg used to build the running plan, kept for history logging
+let workoutStartTime = 0; // Date.now() when the workout started, for actual elapsed duration
 
 function buildPlan(cfg) {
   const steps = [];
@@ -369,6 +486,7 @@ function advanceStep() {
 function finishWorkout() {
   clearInterval(ticking);
   releaseWakeLock();
+  recordHistory();
   cueDone();
   showScreen('done');
 }
@@ -388,6 +506,8 @@ function startWorkout() {
   planIndex = 0;
   remaining = plan[0].mode === 'reps' ? 0 : plan[0].duration;
   paused = false;
+  currentCfg = cfg;
+  workoutStartTime = Date.now();
   showPauseIcon();
   renderStep();
   showScreen('run');
@@ -434,6 +554,7 @@ el('btn-again').addEventListener('click', () => {
 
 renderExerciseList();
 renderPresets();
+renderHistory();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
