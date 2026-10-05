@@ -19,10 +19,45 @@ function showScreen(name) {
   screens[name].classList.add('active');
 }
 
+// ---------- Tabs ----------
+
+const TAB_KEY = 'treino-timer-tab-v1';
+const LAST_PLAN_KEY = 'treino-timer-last-plan-v1';
+const TABS = ['treino', 'plano', 'catalogo', 'historico'];
+
+function showTab(name) {
+  if (!TABS.includes(name)) name = 'treino';
+  for (const t of TABS) {
+    el(`tab-${t}`).classList.toggle('active', t === name);
+  }
+  for (const b of el('tabbar').querySelectorAll('.tab-btn')) {
+    b.classList.toggle('active', b.dataset.tab === name);
+  }
+  el('tab-' + name).scrollTop = 0;
+  el('tab-' + name).parentElement.scrollTop = 0;
+  try { localStorage.setItem(TAB_KEY, name); } catch { /* storage unavailable */ }
+}
+
+el('tabbar').addEventListener('click', (ev) => {
+  const btn = ev.target.closest('.tab-btn');
+  if (btn) showTab(btn.dataset.tab);
+});
+
+let toastTimer = null;
+
+function toast(msg) {
+  const t = el('toast');
+  t.textContent = msg;
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, 1600);
+}
+
 // ---------- Exercise list (current draft) ----------
 
 let exercises = []; // [{name, mode: 'time'|'reps', seconds?, reps?}]
 let addMode = 'time';
+let editingCatalog = null; // catalog entry name being edited via the add-exercise form
 
 const modeToggle = el('mode-toggle');
 modeToggle.addEventListener('click', (ev) => {
@@ -50,6 +85,7 @@ function exerciseValueText(ex) {
 }
 
 function renderExerciseList() {
+  renderDraftCard();
   const container = el('exercise-list');
   container.innerHTML = '';
   if (exercises.length === 0) {
@@ -117,7 +153,15 @@ el('add-exercise-form').addEventListener('submit', (ev) => {
     return;
   }
   const newEx = addMode === 'reps' ? { name, mode: 'reps', reps: value } : { name, mode: 'time', seconds: value };
-  exercises.push(newEx);
+  if (editingCatalog) {
+    // Came from "editar" in the Catálogo tab: update the catalog only.
+    const catalog = loadCatalog().filter((e) => e.name !== editingCatalog);
+    saveCatalog(catalog);
+    editingCatalog = null;
+    toast('Catálogo actualizado');
+  } else {
+    exercises.push(newEx);
+  }
   upsertCatalogEntry({ ...newEx });
   nameInput.value = '';
   valueInput.value = addMode === 'reps' ? '12' : '30';
@@ -161,25 +205,53 @@ function renderCatalog() {
   }
 
   for (const entry of catalog) {
-    const chip = document.createElement('span');
-    chip.className = 'preset-chip';
-    chip.textContent = `${entry.name} (${exerciseValueText(entry)})`;
-    chip.addEventListener('click', () => {
+    const row = document.createElement('div');
+    row.className = entry.mode === 'reps' ? 'exercise-row reps-row' : 'exercise-row';
+
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = entry.name;
+
+    const value = document.createElement('span');
+    value.className = 'value';
+    value.textContent = exerciseValueText(entry);
+
+    const add = document.createElement('span');
+    add.className = 'act';
+    add.textContent = '+ plano';
+    add.addEventListener('click', () => {
       exercises.push({ ...entry });
       renderExerciseList();
+      toast(`${entry.name} adicionado ao plano`);
     });
+
+    const edit = document.createElement('span');
+    edit.className = 'act';
+    edit.textContent = 'editar';
+    edit.addEventListener('click', () => editCatalogEntry(entry));
 
     const del = document.createElement('span');
     del.className = 'del';
     del.textContent = '✕';
-    del.addEventListener('click', (ev) => {
-      ev.stopPropagation();
+    del.addEventListener('click', () => {
       saveCatalog(loadCatalog().filter((e) => e.name !== entry.name));
       renderCatalog();
     });
-    chip.appendChild(del);
-    container.appendChild(chip);
+
+    row.append(name, value, add, edit, del);
+    container.appendChild(row);
   }
+}
+
+// Loads a catalog entry into the add-exercise form; submitting it upserts by name.
+function editCatalogEntry(entry) {
+  editingCatalog = entry.name;
+  const btn = modeToggle.querySelector(`[data-mode="${entry.mode}"]`);
+  btn.click();
+  el('ex-name').value = entry.name;
+  el('ex-value').value = entry.mode === 'reps' ? entry.reps : entry.seconds;
+  showTab('plano');
+  el('ex-name').focus();
 }
 
 // ---------- Presets (saved plans) ----------
@@ -196,27 +268,104 @@ function savePresets(presets) {
   localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
 }
 
+function lastPlanName() {
+  try { return localStorage.getItem(LAST_PLAN_KEY); } catch { return null; }
+}
+
+function planMetaText(p) {
+  const rounds = p.rounds > 1 ? ` · ${p.rounds} séries` : '';
+  return `${p.exercises.length} ex.${rounds}`;
+}
+
+function buildPlanCard({ title, meta, highlight, onStart, onEdit, onDelete }) {
+  const card = document.createElement('div');
+  card.className = highlight ? 'plan-card last' : 'plan-card';
+
+  const info = document.createElement('div');
+  info.className = 'info';
+  const t = document.createElement('div');
+  t.className = 'title';
+  t.textContent = title;
+  const m = document.createElement('div');
+  m.className = 'meta';
+  m.textContent = meta;
+  info.append(t, m);
+
+  const start = document.createElement('button');
+  start.type = 'button';
+  start.className = 'primary';
+  start.textContent = 'Começar';
+  start.addEventListener('click', onStart);
+
+  card.append(info, start);
+
+  if (onEdit) {
+    const edit = document.createElement('span');
+    edit.className = 'act';
+    edit.textContent = 'editar';
+    edit.addEventListener('click', onEdit);
+    card.appendChild(edit);
+  }
+  if (onDelete) {
+    const del = document.createElement('span');
+    del.className = 'del';
+    del.textContent = '✕';
+    del.addEventListener('click', onDelete);
+    card.appendChild(del);
+  }
+  return card;
+}
+
 function renderPresets() {
   const container = el('presets');
   container.innerHTML = '';
   const presets = loadPresets();
-  for (const p of presets) {
-    const chip = document.createElement('span');
-    chip.className = 'preset-chip';
-    chip.textContent = `${p.name} (${p.exercises.length} ex.)`;
-    chip.addEventListener('click', () => applyPreset(p));
-
-    const del = document.createElement('span');
-    del.className = 'del';
-    del.textContent = '✕';
-    del.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      savePresets(loadPresets().filter((x) => x.name !== p.name));
-      renderPresets();
-    });
-    chip.appendChild(del);
-    container.appendChild(chip);
+  if (presets.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'exercise-empty';
+    empty.textContent = 'Ainda sem planos guardados — cria um no separador Plano.';
+    container.appendChild(empty);
+    return;
   }
+  const last = lastPlanName();
+  // Most recently used plan first.
+  presets.sort((a, b) => (b.name === last) - (a.name === last));
+  for (const p of presets) {
+    container.appendChild(buildPlanCard({
+      title: p.name,
+      meta: planMetaText(p) + (p.name === last ? ' · último usado' : ''),
+      highlight: p.name === last,
+      onStart: () => {
+        applyPreset(p);
+        startWorkout();
+      },
+      onEdit: () => {
+        applyPreset(p);
+        showTab('plano');
+      },
+      onDelete: () => {
+        savePresets(loadPresets().filter((x) => x.name !== p.name));
+        renderPresets();
+      },
+    }));
+  }
+}
+
+// Card for the unsaved plan currently being built in the Plano tab.
+function renderDraftCard() {
+  const container = el('draft-card');
+  container.innerHTML = '';
+  const name = el('preset-name').value.trim();
+  const saved = loadPresets().find((p) => p.name === name);
+  const unchanged = saved && JSON.stringify(saved.exercises) === JSON.stringify(exercises);
+  el('draft-label').hidden = exercises.length === 0 || unchanged;
+  if (exercises.length === 0 || unchanged) return;
+  container.appendChild(buildPlanCard({
+    title: el('preset-name').value.trim() || 'Plano actual',
+    meta: `${exercises.length} ex. · não guardado`,
+    onStart: startWorkout,
+    onEdit: () => showTab('plano'),
+  }));
 }
 
 function applyPreset(p) {
@@ -249,6 +398,8 @@ el('btn-save-preset').addEventListener('click', () => {
   presets.push(preset);
   savePresets(presets);
   renderPresets();
+  renderDraftCard();
+  toast('Plano guardado');
 });
 
 // ---------- History (completed workouts) ----------
@@ -278,10 +429,43 @@ function exerciseDetailText(ex) {
   return ex.mode === 'reps' ? `${ex.name} — × ${ex.reps}` : `${ex.name} — ${ex.seconds}s`;
 }
 
+function startOfWeek(now) {
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // Monday
+  return d;
+}
+
+function renderHistoryStats(history) {
+  const weekStart = startOfWeek(new Date());
+  const thisWeek = history.filter((h) => new Date(h.date) >= weekStart).length;
+  const totalMinutes = Math.round(history.reduce((sum, h) => sum + h.durationSeconds, 0) / 60);
+  const stats = [
+    [thisWeek, 'esta semana'],
+    [history.length, 'treinos'],
+    [`${totalMinutes}'`, 'tempo total'],
+  ];
+  const container = el('history-stats');
+  container.innerHTML = '';
+  for (const [num, lbl] of stats) {
+    const box = document.createElement('div');
+    box.className = 'stat';
+    const n = document.createElement('div');
+    n.className = 'num';
+    n.textContent = num;
+    const l = document.createElement('div');
+    l.className = 'lbl';
+    l.textContent = lbl;
+    box.append(n, l);
+    container.appendChild(box);
+  }
+}
+
 function renderHistory() {
   const container = el('history-list');
   container.innerHTML = '';
   const history = loadHistory();
+  renderHistoryStats(history);
 
   if (history.length === 0) {
     const empty = document.createElement('div');
@@ -557,6 +741,7 @@ function finishWorkout() {
 
 function startWorkout() {
   if (exercises.length === 0) {
+    showTab('plano');
     el('ex-name').focus();
     return;
   }
@@ -566,6 +751,11 @@ function startWorkout() {
     rounds: Number(el('rounds').value) || 1,
     exercises,
   };
+  const planName = el('preset-name').value.trim();
+  if (planName && loadPresets().some((p) => p.name === planName)) {
+    try { localStorage.setItem(LAST_PLAN_KEY, planName); } catch { /* storage unavailable */ }
+    renderPresets();
+  }
   plan = buildPlan(cfg);
   planIndex = 0;
   remaining = plan[0].mode === 'reps' ? 0 : plan[0].duration;
@@ -620,6 +810,7 @@ renderExerciseList();
 renderPresets();
 renderHistory();
 renderCatalog();
+try { showTab(localStorage.getItem(TAB_KEY)); } catch { showTab('treino'); }
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

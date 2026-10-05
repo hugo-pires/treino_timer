@@ -37,6 +37,28 @@ escuro, uma cor de destaque por fase (preparação / trabalho / descanso).
 - `icons/` — ícones gerados com Pillow (`icon-192.png`, `icon-512.png`,
   `icon-maskable-512.png`).
 
+## Separadores
+
+Barra inferior com quatro separadores (escondida durante o treino; o último
+separador aberto é lembrado):
+
+- **Treino** — planos guardados como cartões com botão "Começar" (um toque
+  inicia o treino). O último plano usado aparece primeiro e destacado. Se há um
+  plano em edição ainda não guardado, aparece num cartão à parte.
+- **Plano** — construtor: exercícios, preparação, descanso, repetições do
+  circuito, nome e guardar.
+- **Catálogo** — exercícios guardados: "+ plano", editar (actualiza só o
+  catálogo) e apagar.
+- **Histórico** — resumo (treinos esta semana, total, tempo total) e a lista de
+  treinos concluídos.
+
+## Possível extensão: exercícios com carga
+
+Não implementado (o treino é sem pesos). Se vier a ser preciso, a ideia é um
+terceiro tipo de exercício "Carga" (além de Tempo/Repetições) com `reps` e
+`weight` (kg), campo opcional que não obriga a migrar dados existentes, e o
+histórico a guardar peso × repetições por série.
+
 ## Correr localmente
 
 ```

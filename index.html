@@ -18,61 +18,96 @@
 <div id="app">
 
   <section id="screen-setup" class="screen active">
-    <h1>Treino Timer</h1>
+    <div class="tab-panels">
 
-    <div class="section-label">Planos guardados</div>
-    <div class="presets" id="presets"></div>
-
-    <div class="section-label">Histórico</div>
-    <div class="history-list" id="history-list"></div>
-
-    <div class="section-label">Catálogo de exercícios</div>
-    <div class="presets" id="catalog"></div>
-
-    <div class="section-label">Plano actual</div>
-    <div class="exercise-list" id="exercise-list"></div>
-
-    <form id="add-exercise-form">
-      <div class="field grow">
-        <label for="ex-name">Exercício</label>
-        <input type="text" id="ex-name" placeholder="ex: Flexões" maxlength="30">
+      <div class="tab-panel active" id="tab-treino" role="tabpanel">
+        <h1>Treino</h1>
+        <div class="section-label">Planos guardados</div>
+        <div class="plan-cards" id="presets"></div>
+        <div class="section-label" id="draft-label" hidden>Plano em edição</div>
+        <div class="plan-cards" id="draft-card"></div>
       </div>
-      <div class="add-exercise-row">
-        <div class="mode-toggle" id="mode-toggle" role="group" aria-label="Tipo de exercício">
-          <button type="button" class="mode-btn active" data-mode="time">Tempo</button>
-          <button type="button" class="mode-btn" data-mode="reps">Repetições</button>
+
+      <div class="tab-panel" id="tab-plano" role="tabpanel">
+        <h1>Plano</h1>
+        <div class="section-label">Exercícios</div>
+        <div class="exercise-list" id="exercise-list"></div>
+
+        <form id="add-exercise-form">
+          <div class="field grow">
+            <label for="ex-name">Exercício</label>
+            <input type="text" id="ex-name" placeholder="ex: Flexões" maxlength="30">
+          </div>
+          <div class="add-exercise-row">
+            <div class="mode-toggle" id="mode-toggle" role="group" aria-label="Tipo de exercício">
+              <button type="button" class="mode-btn active" data-mode="time">Tempo</button>
+              <button type="button" class="mode-btn" data-mode="reps">Repetições</button>
+            </div>
+            <div class="field narrow">
+              <label for="ex-value" id="ex-value-label">Segundos</label>
+              <input type="number" id="ex-value" min="1" max="3600" value="30">
+            </div>
+            <button id="btn-add-exercise" type="submit" class="secondary add-btn">+</button>
+          </div>
+        </form>
+
+        <div class="section-label">Definições</div>
+        <div class="global-fields">
+          <div class="field">
+            <label for="prepare">Preparação (s)</label>
+            <input type="number" id="prepare" min="0" max="60" value="10">
+          </div>
+          <div class="field">
+            <label for="rest">Descanso (s)</label>
+            <input type="number" id="rest" min="0" max="600" value="15">
+          </div>
+          <div class="field">
+            <label for="rounds">Repetir circuito</label>
+            <input type="number" id="rounds" min="1" max="99" value="1">
+          </div>
+          <div class="field">
+            <label for="preset-name">Nome do plano (p/ guardar)</label>
+            <input type="text" id="preset-name" placeholder="ex: Treino de casa">
+          </div>
         </div>
-        <div class="field narrow">
-          <label for="ex-value" id="ex-value-label">Segundos</label>
-          <input type="number" id="ex-value" min="1" max="3600" value="30">
-        </div>
-        <button id="btn-add-exercise" type="submit" class="secondary add-btn">+</button>
-      </div>
-    </form>
 
-    <div class="global-fields">
-      <div class="field">
-        <label for="prepare">Preparação (s)</label>
-        <input type="number" id="prepare" min="0" max="60" value="10">
+        <div class="setup-actions">
+          <button id="btn-save-preset" class="secondary">Guardar</button>
+          <button id="btn-start" class="primary">Começar</button>
+        </div>
       </div>
-      <div class="field">
-        <label for="rest">Descanso (s)</label>
-        <input type="number" id="rest" min="0" max="600" value="15">
+
+      <div class="tab-panel" id="tab-catalogo" role="tabpanel">
+        <h1>Catálogo</h1>
+        <div class="section-label">Exercícios guardados</div>
+        <div class="exercise-list" id="catalog"></div>
       </div>
-      <div class="field">
-        <label for="rounds">Repetir circuito</label>
-        <input type="number" id="rounds" min="1" max="99" value="1">
+
+      <div class="tab-panel" id="tab-historico" role="tabpanel">
+        <h1>Histórico</h1>
+        <div class="stats" id="history-stats"></div>
+        <div class="section-label">Treinos concluídos</div>
+        <div class="history-list" id="history-list"></div>
       </div>
-      <div class="field">
-        <label for="preset-name">Nome do plano (p/ guardar)</label>
-        <input type="text" id="preset-name" placeholder="ex: Treino de casa">
-      </div>
+
     </div>
 
-    <div class="setup-actions">
-      <button id="btn-save-preset" class="secondary">Guardar</button>
-      <button id="btn-start" class="primary">Começar</button>
-    </div>
+    <div class="toast" id="toast" hidden></div>
+
+    <nav class="tabbar" id="tabbar" role="tablist" aria-label="Secções">
+      <button class="tab-btn active" data-tab="treino" role="tab">
+        <svg viewBox="0 0 24 24"><path d="M7 4l14 8-14 8V4z"/></svg><span>Treino</span>
+      </button>
+      <button class="tab-btn" data-tab="plano" role="tab">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h10v2H4z"/></svg><span>Plano</span>
+      </button>
+      <button class="tab-btn" data-tab="catalogo" role="tab">
+        <svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg><span>Catálogo</span>
+      </button>
+      <button class="tab-btn" data-tab="historico" role="tab">
+        <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-2.05-4.95L14 10h7V3l-2.64 2.64A8.96 8.96 0 0 0 12 3zm-1 5v5l4 2 .8-1.6-3-1.4V8z"/></svg><span>Histórico</span>
+      </button>
+    </nav>
   </section>
 
   <section id="screen-run" class="screen">
