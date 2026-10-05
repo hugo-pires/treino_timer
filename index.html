@@ -33,21 +33,13 @@
         <div class="section-label">Exercícios</div>
         <div class="exercise-list" id="exercise-list"></div>
 
-        <form id="add-exercise-form">
-          <div class="field grow">
-            <label for="ex-name">Exercício</label>
-            <input type="text" id="ex-name" placeholder="ex: Flexões" maxlength="30">
-          </div>
+        <form id="pick-exercise-form">
           <div class="add-exercise-row">
-            <div class="mode-toggle" id="mode-toggle" role="group" aria-label="Tipo de exercício">
-              <button type="button" class="mode-btn active" data-mode="time">Tempo</button>
-              <button type="button" class="mode-btn" data-mode="reps">Repetições</button>
+            <div class="field grow">
+              <label for="plan-pick">Adicionar do catálogo</label>
+              <select id="plan-pick"></select>
             </div>
-            <div class="field narrow">
-              <label for="ex-value" id="ex-value-label">Segundos</label>
-              <input type="number" id="ex-value" min="1" max="3600" value="30">
-            </div>
-            <button id="btn-add-exercise" type="submit" class="secondary add-btn">+</button>
+            <button id="btn-pick-exercise" type="submit" class="secondary add-btn">+</button>
           </div>
         </form>
 
@@ -81,6 +73,24 @@
         <h1>Catálogo</h1>
         <div class="section-label">Exercícios guardados</div>
         <div class="exercise-list" id="catalog"></div>
+
+        <form id="add-exercise-form">
+          <div class="field grow">
+            <label for="ex-name">Novo exercício</label>
+            <input type="text" id="ex-name" placeholder="ex: Flexões" maxlength="30">
+          </div>
+          <div class="add-exercise-row">
+            <div class="mode-toggle" id="mode-toggle" role="group" aria-label="Tipo de exercício">
+              <button type="button" class="mode-btn active" data-mode="time">Tempo</button>
+              <button type="button" class="mode-btn" data-mode="reps">Repetições</button>
+            </div>
+            <div class="field narrow">
+              <label for="ex-value" id="ex-value-label">Segundos</label>
+              <input type="number" id="ex-value" min="1" max="3600" value="30">
+            </div>
+            <button id="btn-add-exercise" type="submit" class="secondary add-btn">+</button>
+          </div>
+        </form>
       </div>
 
       <div class="tab-panel" id="tab-historico" role="tabpanel">

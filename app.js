@@ -57,7 +57,7 @@ function toast(msg) {
 
 let exercises = []; // [{name, mode: 'time'|'reps', seconds?, reps?}]
 let addMode = 'time';
-let editingCatalog = null; // catalog entry name being edited via the add-exercise form
+let editingCatalog = null; // catalog entry name being edited via the add-exercise form (Catálogo tab)
 
 const modeToggle = el('mode-toggle');
 modeToggle.addEventListener('click', (ev) => {
@@ -91,7 +91,7 @@ function renderExerciseList() {
   if (exercises.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'exercise-empty';
-    empty.textContent = 'Ainda sem exercícios — adiciona abaixo.';
+    empty.textContent = 'Ainda sem exercícios — escolhe do catálogo abaixo.';
     container.appendChild(empty);
     return;
   }
@@ -154,18 +154,28 @@ el('add-exercise-form').addEventListener('submit', (ev) => {
   }
   const newEx = addMode === 'reps' ? { name, mode: 'reps', reps: value } : { name, mode: 'time', seconds: value };
   if (editingCatalog) {
-    // Came from "editar" in the Catálogo tab: update the catalog only.
-    const catalog = loadCatalog().filter((e) => e.name !== editingCatalog);
-    saveCatalog(catalog);
+    // Came from "editar": rename/replace the original entry.
+    saveCatalog(loadCatalog().filter((e) => e.name !== editingCatalog));
     editingCatalog = null;
     toast('Catálogo actualizado');
   } else {
-    exercises.push(newEx);
+    toast(`${name} guardado no catálogo`);
   }
   upsertCatalogEntry({ ...newEx });
   nameInput.value = '';
   valueInput.value = addMode === 'reps' ? '12' : '30';
   nameInput.focus();
+});
+
+el('pick-exercise-form').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const entry = loadCatalog().find((e) => e.name === el('plan-pick').value);
+  if (!entry) {
+    showTab('catalogo');
+    el('ex-name').focus();
+    return;
+  }
+  exercises.push({ ...entry });
   renderExerciseList();
 });
 
@@ -191,15 +201,36 @@ function upsertCatalogEntry(entry) {
   renderCatalog();
 }
 
+function renderPlanPicker(catalog) {
+  const pick = el('plan-pick');
+  const previous = pick.value;
+  pick.innerHTML = '';
+  if (catalog.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = 'Catálogo vazio — cria exercícios no Catálogo';
+    pick.appendChild(opt);
+    return;
+  }
+  for (const entry of catalog) {
+    const opt = document.createElement('option');
+    opt.value = entry.name;
+    opt.textContent = `${entry.name} (${exerciseValueText(entry)})`;
+    pick.appendChild(opt);
+  }
+  if (catalog.some((e) => e.name === previous)) pick.value = previous;
+}
+
 function renderCatalog() {
   const container = el('catalog');
   container.innerHTML = '';
   const catalog = loadCatalog().slice().sort((a, b) => a.name.localeCompare(b.name, 'pt'));
+  renderPlanPicker(catalog);
 
   if (catalog.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'exercise-empty';
-    empty.textContent = 'Ainda sem exercícios guardados — adiciona um abaixo.';
+    empty.textContent = 'Ainda sem exercícios guardados — cria um abaixo.';
     container.appendChild(empty);
     return;
   }
@@ -250,7 +281,7 @@ function editCatalogEntry(entry) {
   btn.click();
   el('ex-name').value = entry.name;
   el('ex-value').value = entry.mode === 'reps' ? entry.reps : entry.seconds;
-  showTab('plano');
+  showTab('catalogo');
   el('ex-name').focus();
 }
 
@@ -384,7 +415,7 @@ el('btn-save-preset').addEventListener('click', () => {
     return;
   }
   if (exercises.length === 0) {
-    el('ex-name').focus();
+    el('plan-pick').focus();
     return;
   }
   const preset = {
@@ -742,7 +773,7 @@ function finishWorkout() {
 function startWorkout() {
   if (exercises.length === 0) {
     showTab('plano');
-    el('ex-name').focus();
+    el('plan-pick').focus();
     return;
   }
   const cfg = {
